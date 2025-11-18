@@ -1,58 +1,81 @@
 const http = require("http");
-var StringDecoder = require("string_decoder").StringDecoder;
+const { StringDecoder } = require("string_decoder");
 
 const getBody = (req, callback) => {
   const decode = new StringDecoder("utf-8");
   let body = "";
-  req.on("data", function (data) {
+
+  req.on("data", (data) => {
     body += decode.write(data);
   });
-  req.on("end", function () {
+
+  req.on("end", () => {
     body += decode.end();
     const body1 = decodeURI(body);
     const bodyArray = body1.split("&");
     const resultHash = {};
+
     bodyArray.forEach((part) => {
+      if (!part) return;
       const partArray = part.split("=");
-      resultHash[partArray[0]] = partArray[1];
+      const key = partArray[0];
+      const value = partArray[1];
+      if (key) {
+        resultHash[key] = value;
+      }
     });
+
     callback(resultHash);
   });
 };
 
-// here, you could declare one or more variables to store what comes back from the form.
-let item = "Enter something below.";
+// variables to store what comes back from the form
+let item = "Pick a color below.";
+let userColor = "#ffffff"; // default background color
 
-// here, you can change the form below to modify the input fields and what is displayed.
-// This is just ordinary html with string interpolation.
+// HTML with string interpolation
 const form = () => {
   return `
-  <body>
-  <p>${item}</p>
-  <form method="POST">
-  <input name="item"></input>
-  <button type="submit">Submit</button>
-  </form>
-  </body>
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <title>Color picker</title>
+    </head>
+    <body style="background-color: ${userColor}; font-family: sans-serif;">
+      <h1>Simple color picker</h1>
+      <p>${item}</p>
+      <form method="POST">
+        <label for="color">Choose a color:</label>
+        <input
+          type="color"
+          id="color"
+          name="color"
+          value="${userColor}"
+        />
+        <button type="submit">Submit</button>
+      </form>
+    </body>
+  </html>
   `;
 };
 
 const server = http.createServer((req, res) => {
-  console.log("req.method is ", req.method);
-  console.log("req.url is ", req.url);
+  console.log("req.method is", req.method);
+  console.log("req.url is", req.url);
+
   if (req.method === "POST") {
     getBody(req, (body) => {
-      console.log("The body of the post is ", body);
-      // here, you can add your own logic
-      if (body["item"]) {
-        item = body["item"];
+      console.log("The body of the post is", body);
+
+      if (body.color) {
+        userColor = body.color;
+        item = `You chose color: ${userColor}`;
       } else {
-        item = "Nothing was entered.";
+        item = "No color was chosen.";
       }
-      // Your code changes would end here
-      res.writeHead(303, {
-        Location: "/",
-      });
+
+      res.writeHead(303, { Location: "/" });
       res.end();
     });
   } else {
