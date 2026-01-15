@@ -1,0 +1,19 @@
+1. In this lesson, you created a middleware function called asyncWrapper. Why?
+
+The asyncWrapper middleware is used to avoid writing try/catch blocks in every async route handler. 
+It catches errors thrown inside async functions and forwards them to the centralized error-handling middleware using next(err).
+
+2. Suppose that you want to make sure that both a status code and an error message are sent back to the user
+when they request the URL for a task that does not exist. 
+Assume that you’ve created a CustomAPIError class and an error handler that references that class. Complete the code:
+
+const getTask = asyncWrapper(async (req, res, next) => {
+  const { id: taskID } = req.params;
+  const task = await Task.findOne({ _id: taskID });
+//////////added code//////
+  if (!task) {
+    return next(new CustomAPIError(`No task with id: ${taskID}`, 404));
+  }
+/////////////////////////
+  res.status(200).json({ task });
+});

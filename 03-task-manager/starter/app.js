@@ -1,22 +1,24 @@
 const express = require("express");
 const mongoose = require("mongoose");
 require("dotenv").config();
-const Task = require("./models/Task");
 
 const app = express();
+
+const tasksRouter = require("./routers/tasks");
+const errorHandlerMiddleware = require("./middleware/error-handler");
+
 app.use(express.json());
-app.post("/tasks", async (req, res) => {
-  try {
-    const task = await Task.create(req.body);
-    res.status(201).json(task);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+app.use(express.static("./public"));
+
+app.get("/hello", (req, res) => {
+  res.send("Task Manager App");
 });
 
-app.get("/", (req, res) => {
-  res.send("Task Manager API is running");
-});
+// routes
+app.use("/api/v1/tasks", tasksRouter);
+
+// error handler
+app.use(errorHandlerMiddleware);
 
 const PORT = process.env.PORT || 3000;
 
@@ -26,10 +28,7 @@ const start = async () => {
       throw new Error("MONGO_URI is missing in .env");
     }
 
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGO_URI);
 
     console.log("Connected to MongoDB");
 
