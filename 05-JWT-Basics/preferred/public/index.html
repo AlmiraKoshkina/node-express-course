@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>JWT Mini</title>
+  </head>
+  <body>
+    <h1>JWT Mini</h1>
+
+    <input id="username" placeholder="username" />
+    <button id="btnLogon">Logon</button>
+
+    <button id="btnHello">Hello</button>
+
+    <pre id="out"></pre>
+
+    <script>
+      let token = localStorage.getItem("token") || "";
+      const out = document.getElementById("out");
+
+      document
+        .getElementById("btnLogon")
+        .addEventListener("click", async () => {
+          const username = document.getElementById("username").value.trim();
+
+          const res = await fetch("/api/v1/logon", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username }),
+          });
+
+          const data = await res.json();
+          if (data.token) {
+            token = data.token;
+            localStorage.setItem("token", token);
+          }
+
+          out.textContent = JSON.stringify(data, null, 2);
+        });
+
+      document
+        .getElementById("btnHello")
+        .addEventListener("click", async () => {
+          const res = await fetch("/api/v1/hello", {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+
+          const data = await res.json();
+          out.textContent = JSON.stringify(data, null, 2);
+        });
+    </script>
+  </body>
+</html>
